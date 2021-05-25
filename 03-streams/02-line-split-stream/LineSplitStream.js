@@ -1,5 +1,4 @@
 const stream = require('stream');
-const os = require('os');
 
 class LineSplitStream extends stream.Transform {
   constructor(options) {
