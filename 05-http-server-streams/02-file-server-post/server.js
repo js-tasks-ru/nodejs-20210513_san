@@ -56,24 +56,19 @@ server.on('request', async (req, res) => {
       try {
         await pipelinePromise(
             req,
-            new LimitSizeStream({limit: 1}),
+            new LimitSizeStream({limit: 1000000}),
             fs.createWriteStream(filepath, {encoding: 'utf-8'}),
         );
         res.statusCode = 201;
         return res.end();
       } catch (err) {
-        if (err) {
-          if (err.code === 'LIMIT_EXCEEDED') {
-            res.statusCode = 413;
-          } else {
-            res.statusCode = 500;
-          }
-          fs.unlink(filepath, (err) => console.log());
-          return res.end();
+        if (err.code === 'LIMIT_EXCEEDED') {
+          res.statusCode = 413;
         } else {
-          res.statusCode = 201;
-          return res.end();
+          res.statusCode = 500;
         }
+        fs.unlink(filepath, (err) => console.log());
+        return res.end();
       }
     }
 
