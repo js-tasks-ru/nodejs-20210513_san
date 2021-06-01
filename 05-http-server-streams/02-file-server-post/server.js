@@ -4,6 +4,7 @@ const path = require('path');
 const fsPromises = fs.promises;
 const {pipeline} = require('stream');
 const LimitSizeStream = require('./LimitSizeStream');
+const {promisify} = require('util');
 
 const server = new http.Server();
 
@@ -30,25 +31,50 @@ server.on('request', async (req, res) => {
         // console.log(err);
       }
 
-      return pipeline(
-          req,
-          new LimitSizeStream({limit: 1000000}),
-          fs.createWriteStream(filepath, {encoding: 'utf-8'}),
-          (err, data) => {
-            if (err) {
-              if (err.code === 'LIMIT_EXCEEDED') {
-                res.statusCode = 413;
-                return res.end();
-              }
-              fs.unlink(filepath, (err) => console.log(err));
-              res.statusCode = 500;
-              return res.end();
-            } else {
-              res.statusCode = 201;
-              res.end();
-            }
-          },
-      );
+      // pipeline(
+      //   req,
+      //   new LimitSizeStream({ limit: 1 }),
+      //   fs.createWriteStream(filepath, { encoding: "utf-8" }),
+      //   (err, data) => {
+      //     if (err) {
+      //       if (err.code === "LIMIT_EXCEEDED") {
+      //         res.statusCode = 413;
+      //         return res.end();
+      //       }
+      //       fs.unlink(filepath, (err) => console.log(err));
+      //       res.statusCode = 500;
+      //       return res.end();
+      //     } else {
+      //       res.statusCode = 201;
+      //       res.end();
+      //     }
+      //   }
+      // );
+
+      const pipelinePromise = promisify(pipeline);
+
+      try {
+        await pipelinePromise(
+            req,
+            new LimitSizeStream({limit: 1}),
+            fs.createWriteStream(filepath, {encoding: 'utf-8'}),
+        );
+        res.statusCode = 201;
+        return res.end();
+      } catch (err) {
+        if (err) {
+          if (err.code === 'LIMIT_EXCEEDED') {
+            res.statusCode = 413;
+          } else {
+            res.statusCode = 500;
+          }
+          fs.unlink(filepath, (err) => console.log());
+          return res.end();
+        } else {
+          res.statusCode = 201;
+          return res.end();
+        }
+      }
     }
 
     default:
