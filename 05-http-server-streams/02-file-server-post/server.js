@@ -33,7 +33,7 @@ server.on('request', async (req, res) => {
 
       const pipelinePromise = promisify(pipeline);
 
-      const limitSizeStream = new LimitSizeStream({limit: 1_000_000});
+      const limitSizeStream = new LimitSizeStream({limit: 1000000});
 
       limitSizeStream.on('error', (err) => {
         fs.unlink(filepath, (err) => console.log());
