@@ -12,6 +12,7 @@ class LimitSizeStream extends stream.Transform {
 
   _transform(chunk, encoding, callback) {
     const length = Buffer.byteLength(chunk, "utf-8");
+    console.log(length, "transform");
     if (this.#size + length > this.#limit)
       return callback(new LimitExceededError());
     //
